@@ -1,0 +1,57 @@
+/* Futures page: 3-column layout for chart | orderbook | orderform */
+.futures-three-col {
+  /* increase chart share and slightly reduce side column widths for cleaner layout */
+  grid-template-columns: minmax(0, 68fr) minmax(200px, 16fr) minmax(200px, 16fr);
+  grid-template-areas: "chart orderbook orderform";
+}
+
+.chart-col { grid-area: chart; }
+.orderbook-col { grid-area: orderbook; }
+.orderform-col { grid-area: orderform; }
+
+/* Chart sizing — make chart taller so it reads well */
+.chart-col { min-height: 520px; }
+
+/* Slightly reduce padding/font sizes inside the side cards to compact UI */
+.futures-three-col .orderbook-col > *,
+.futures-three-col .orderform-col > * {
+  padding: 10px !important;
+}
+.futures-three-col .orderbook-col input,
+.futures-three-col .orderform-col input,
+.futures-three-col .orderbook-col button,
+.futures-three-col .orderform-col button {
+  font-size: 13px !important;
+}
+
+/* Responsive: chart full-width on first row; orderbook and orderform split 50/50 on second row */
+@media (max-width: 1024px) {
+  .futures-three-col {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "chart chart"
+      "orderbook orderform";
+    gap: 12px;
+    margin: 6px 6px 0 6px;
+  }
+
+  /* remove right borders on stacked layout for cleaner look */
+  .futures-three-col > .chart-col { border-right: none !important; margin-right: 0 !important; }
+  .futures-three-col > .orderbook-col { border-right: 1px solid rgba(255,255,255,0.04); }
+
+  /* Make chart slightly shorter on smaller screens but keep it prominent */
+  .chart-col { min-height: 420px; }
+
+  /* Limit side card heights so they don't overwhelm mobile; make them scrollable */
+  .orderbook-col, .orderform-col {
+    max-height: 420px;
+    overflow: auto;
+  }
+
+  /* compact side-card internals for mobile */
+  .futures-three-col .orderbook-col > *,
+  .futures-three-col .orderform-col > * {
+    padding: 8px !important;
+  }
+}
