@@ -71,7 +71,7 @@ const TradeHistory = () => {
       const token = localStorage.getItem("token");
 
       const res = await fetch(
-        `${BASE_URL_API}/api/coinswitch/spot/trades?user=${userId}`,
+        `${BASE_URL_API}/api/spot/trades?user=${userId}`,
         {
           headers: {
             "Content-Type": "application/json",

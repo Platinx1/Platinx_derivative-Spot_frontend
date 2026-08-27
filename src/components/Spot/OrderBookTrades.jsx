@@ -570,9 +570,6 @@ const OrderBookTrades = () => {
       setLastPrice(newPrice);
       setPriceDir(dir);
       rebuildBook(newPrice);
-      if (typeof updateSelectedPrice === "function") {
-        updateSelectedPrice(newPrice);
-      }
 
       const trade = {
         price: newPrice,

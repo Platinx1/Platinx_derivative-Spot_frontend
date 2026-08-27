@@ -709,7 +709,7 @@ const TradingChart = () => {
   const STREAM_KEY = `${SYMBOL.toLowerCase()}@markPrice`;
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-  const TICKER_API = `${BASE_URL}/api/pi42/ticker24Hr/${SYMBOL}`;
+  const TICKER_API = `${BASE_URL}/api/fno/ticker24Hr/${SYMBOL}`;
 
   const WS_URL = "https://pilot-fawss.pi42.com";
   const COIN_ICON_BG = "linear-gradient(135deg,#f7931a,#e07b10)"; // You can make dynamic later

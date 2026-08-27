@@ -5,8 +5,8 @@ import { useTradingContext } from "../../context/TradingContext";
 
 // ─── CONFIG ──────────────────────────────────────────────────────────────────
 const BASE_URL_API = import.meta.env.VITE_API_BASE_URL;
-const PORTFOLIO_API_URL = `${BASE_URL_API}/api/coinswitch/spot/portfolio`;
-const PLACE_ORDER_API_URL = `${BASE_URL_API}/api/coinswitch/spot/order`;
+const PORTFOLIO_API_URL = `${BASE_URL_API}/api/spot/portfolio`;
+const PLACE_ORDER_API_URL = `${BASE_URL_API}/api/spot/order`;
 
 const BASE_URL = "wss://ws.coinswitch.co";
 const NAMESPACE = "/coinswitchx";
@@ -136,7 +136,7 @@ const Portfolio = () => {
       try {
         let priceMap = {};
         // 1. Try ticker/all first
-        const allRes = await fetch(`${BASE_URL_API}/api/coinswitch/spot/ticker/all`).catch(() => null);
+        const allRes = await fetch(`${BASE_URL_API}/api/spot/ticker/all`).catch(() => null);
         const allJson = allRes ? await allRes.json().catch(() => null) : null;
         if (allJson?.success && allJson?.data?.data) {
           const raw = allJson.data.data;
@@ -154,7 +154,7 @@ const Portfolio = () => {
             if (!symbol || priceMap[symbol] !== undefined) return;
             try {
               const res = await fetch(
-                `${BASE_URL_API}/api/coinswitch/spot/ticker/single?symbol=${encodeURIComponent(
+                `${BASE_URL_API}/api/spot/ticker/single?symbol=${encodeURIComponent(
                   symbol
                 )}&exchange=${exchange}`
               );

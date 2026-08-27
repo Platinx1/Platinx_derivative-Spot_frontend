@@ -6,10 +6,10 @@ import { toast } from "react-toastify";
 // ─── CONSTANTS ───────────────────────────────────────────────────────────────
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const PORTFOLIO_API_URL = `${BASE_URL}/api/coinswitch/spot/portfolio`;
-const PLACE_ORDER_API_URL = `${BASE_URL}/api/coinswitch/spot/order`;
-const TICKER_API_BASE = `${BASE_URL}/api/coinswitch/spot/ticker/single`;
-const WALLET_API_URL = `${BASE_URL}/api/coinswitch/spot/wallet-balance`;
+const PORTFOLIO_API_URL = `${BASE_URL}/api/spot/portfolio`;
+const PLACE_ORDER_API_URL = `${BASE_URL}/api/spot/order`;
+const TICKER_API_BASE = `${BASE_URL}/api/spot/ticker/single`;
+const WALLET_API_URL = `${BASE_URL}/api/spot/wallet-balance`;
 const FEE_RATE = 0.004; // 0.4%
 
 // ─── COLOR TOKENS ────────────────────────────────────────────────────────────
@@ -309,9 +309,13 @@ const OrderPlacement = () => {
 
   useEffect(() => {
     if (selectedPrice != null && selectedPrice !== "" && !isNaN(Number(selectedPrice))) {
-      setCurrentPrice(String(selectedPrice));
+      setLimitPrice(String(selectedPrice));
+      isPriceSetRef.current = true;
+      if (typeof updateSelectedPrice === "function") {
+        updateSelectedPrice(null);
+      }
     }
-  }, [selectedPrice]);
+  }, [selectedPrice, updateSelectedPrice]);
 
   // ── Fetch Ticker ──────────────────────────────────────────────────────────
   const fetchTicker = useCallback(
@@ -371,7 +375,7 @@ const OrderPlacement = () => {
   const fetchPairInfo = useCallback(async () => {
     try {
       const res = await fetch(
-        `${BASE_URL}/api/coinswitch/spot/pairs?name=${encodeURIComponent(
+        `${BASE_URL}/api/spot/pairs?name=${encodeURIComponent(
           SYMBOL
         )}`
       );
@@ -388,11 +392,14 @@ const OrderPlacement = () => {
     fetchPairInfo();
   }, [fetchPairInfo]);
 
+  const effectivePrice =
+    (parseFloat(String(limitPrice).replace(/,/g, "")) || Number(currentPrice)) || 0;
+
   const minimumOrderQty =
-    pairInfo && currentPrice
+    pairInfo && effectivePrice > 0
       ? getMinimumOrderQuantity(
         Number(pairInfo.minQty),
-        Number(currentPrice),
+        effectivePrice,
         Number(pairInfo.quantityPrecision)
       )
       : 0;
@@ -469,11 +476,7 @@ const OrderPlacement = () => {
   useEffect(() => {
     fetchBalance();
   }, [fetchBalance, walletRefresh]);
-  useEffect(() => {
-    if (selectedPrice != null && selectedPrice !== "") {
-      setCurrentPrice(String(selectedPrice));
-    }
-  }, [selectedPrice]);
+
   // ── Derived values ────────────────────────────────────────────────────────
   const price = parseFloat(limitPrice.replace(/,/g, "")) || 0;
   const qtyNum = parseFloat(qty) || 0;

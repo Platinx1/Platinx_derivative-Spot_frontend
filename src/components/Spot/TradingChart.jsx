@@ -99,7 +99,7 @@ const TradingChart = ({ selectedCoin }) => {
   // Fetch Ticker Data from /spot/ticker/single API
   const fetchTicker = useCallback(async () => {
     try {
-      const primaryUrl = `${BASE_URL}/api/coinswitch/spot/ticker/single?symbol=${encodeURIComponent(SYMBOL)}&exchange=${EXCHANGE}`;
+      const primaryUrl = `${BASE_URL}/api/spot/ticker/single?symbol=${encodeURIComponent(SYMBOL)}&exchange=${EXCHANGE}`;
       const fallbackUrl = `${BASE_URL}/api/spot/ticker/single?symbol=${encodeURIComponent(SYMBOL)}`;
 
       let res = await fetch(primaryUrl);
@@ -143,15 +143,12 @@ const TradingChart = ({ selectedCoin }) => {
         const newP = d.lastPrice || d.price;
         if (newP) {
           setCurrentPrice(String(newP));
-          if (typeof updateSelectedPrice === "function") {
-            updateSelectedPrice(newP);
-          }
         }
       }
     } catch (e) {
       console.error("Ticker fetch error:", e);
     }
-  }, [BASE_URL, SYMBOL, EXCHANGE, updateSelectedPrice]);
+  }, [BASE_URL, SYMBOL, EXCHANGE]);
 
   // Handle Trade Socket Logic
   const handleTrade = useCallback(
@@ -164,13 +161,10 @@ const TradingChart = ({ selectedCoin }) => {
           setTimeout(() => setPriceFlash(""), 600);
           return String(data.p);
         });
-        if (typeof updateSelectedPrice === "function") {
-          updateSelectedPrice(data.p);
-        }
         fetchTicker();
       }
     },
-    [SYMBOL, updateSelectedPrice, fetchTicker]
+    [SYMBOL, fetchTicker]
   );
 
   // WebSocket Connection Lifecycle

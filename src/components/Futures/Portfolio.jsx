@@ -7,11 +7,11 @@ import { useUser } from "../../context/UserContext";
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 const WS_URL = "https://pilot-fawss.pi42.com";
 
-const WALLET_API_BASE = `${BASE_URL}/api/pi42/futures-wallet/details`;
-const POSITIONS_API_BASE = `${BASE_URL}/api/pi42/positions`;
-const PLACE_ORDER_API = `${BASE_URL}/api/pi42/place-order`;
-const EXCHANGE_INFO_API = `${BASE_URL}/api/pi42/exchange-info`;
-const TRADES_BY_POSITION_API = `${BASE_URL}/api/pi42/trades-by-position`;
+const WALLET_API_BASE = `${BASE_URL}/api/fno/futures-wallet/details`;
+const POSITIONS_API_BASE = `${BASE_URL}/api/fno/positions`;
+const PLACE_ORDER_API = `${BASE_URL}/api/fno/place-order`;
+const EXCHANGE_INFO_API = `${BASE_URL}/api/fno/exchange-info`;
+const TRADES_BY_POSITION_API = `${BASE_URL}/api/fno/trades-by-position`;
 
 // ─── COLORS ────────────────────────────────────────────────────────────────
 const T = {

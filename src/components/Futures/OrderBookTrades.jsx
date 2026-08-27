@@ -7,7 +7,7 @@ import { useTradingContext } from "../../context/TradingContext";
 const WS_URL = "https://pilot-fawss.pi42.com";
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const PAIR_API_BASE = `${BASE_URL}/api/pi42/pair-by-name`;
+const PAIR_API_BASE = `${BASE_URL}/api/fno/pair-by-name`;
 
 // ─── COLORS ───────────────────────────────────────────────────────────────────
 const C = {

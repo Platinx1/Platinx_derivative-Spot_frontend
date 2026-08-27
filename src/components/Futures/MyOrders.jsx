@@ -6,9 +6,9 @@ import { toast } from "react-toastify";
 // ─── APIs ───────────────────────────────────────────────────────────────
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const OPEN_ORDERS_API_BASE = `${BASE_URL}/api/pi42/open-orders`;
-const CANCEL_ORDER_API = `${BASE_URL}/api/pi42/delete-order`;
-const EDIT_ORDER_API = `${BASE_URL}/api/pi42/edit-order`;
+const OPEN_ORDERS_API_BASE = `${BASE_URL}/api/fno/open-orders`;
+const CANCEL_ORDER_API = `${BASE_URL}/api/fno/delete-order`;
+const EDIT_ORDER_API = `${BASE_URL}/api/fno/edit-order`;
 
 const MyOrders = ({ openOnly = true }) => {
   const { userId } = useUser();
@@ -330,7 +330,7 @@ const MyOrders = ({ openOnly = true }) => {
             {orders.length === 0 ? (
               <tr>
                 <td
-                  colSpan="12"
+                  colSpan="11"
                   style={{ padding: 60, textAlign: "center", color: "#666" }}
                 >
                   No open orders
@@ -369,9 +369,9 @@ const MyOrders = ({ openOnly = true }) => {
                     <td style={{ padding: "12px 16px", textAlign: "right" }}>
                       ₹{parseFloat(order.price || 0).toFixed(2)}
                     </td>
-                    <td style={{ padding: "12px 16px", textAlign: "right", color: order.stopPrice ? "#f59e0b" : "inherit" }}>
+                    {/* <td style={{ padding: "12px 16px", textAlign: "right", color: order.stopPrice ? "#f59e0b" : "inherit" }}>
                       {order.stopPrice ? `₹${parseFloat(order.stopPrice).toFixed(2)}` : "—"}
-                    </td>
+                    </td> */}
                     <td
                       style={{
                         padding: "12px 16px",
