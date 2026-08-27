@@ -33,7 +33,7 @@ const SignupPage = () => {
       });
 
       const response = await fetch(
-        `${BASE_URL}/api/pi42/create-user?${queryParams}`,
+        `${BASE_URL}/api/fno/create-user?${queryParams}`,
         { method: "GET" },
       );
 

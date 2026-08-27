@@ -14,10 +14,10 @@ import { useUser } from "../../context/UserContext";
 // ─── APIs ────────────────────────────────────────────────────────────────────
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const WALLET_API = `${BASE_URL}/api/pi42/futures-wallet/details`;
-const HISTORY_API = `${BASE_URL}/api/pi42/wallet-history`;
-const DEPOSIT_API = `${BASE_URL}/api/pi42/deposit-inr`;
-const WITHDRAW_API = `${BASE_URL}/api/pi42/withdraw-inr`;
+const WALLET_API = `${BASE_URL}/api/fno/futures-wallet/details`;
+const HISTORY_API = `${BASE_URL}/api/fno/wallet-history`;
+const DEPOSIT_API = `${BASE_URL}/api/fno/deposit-inr`;
+const WITHDRAW_API = `${BASE_URL}/api/fno/withdraw-inr`;
 
 const HISTORY_LIMIT = 20;
 

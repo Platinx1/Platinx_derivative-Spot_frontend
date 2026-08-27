@@ -81,7 +81,7 @@ const MyOrders = ({ openOnly = true, refreshOrders }) => {
       const headers = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
-      const apiUrl = `${BASE_URL_API}/api/coinswitch/spot/orders?user=${userId}`;
+      const apiUrl = `${BASE_URL_API}/api/spot/orders?user=${userId}`;
       const res = await fetch(apiUrl, { headers });
       const json = await res.json();
 
@@ -155,7 +155,7 @@ const MyOrders = ({ openOnly = true, refreshOrders }) => {
       if (token) headers["Authorization"] = `Bearer ${token}`;
 
       const response = await fetch(
-        `${BASE_URL_API}/api/coinswitch/spot/orders/${targetId}`,
+        `${BASE_URL_API}/api/spot/orders/${targetId}`,
         {
           method: "DELETE",
           headers,

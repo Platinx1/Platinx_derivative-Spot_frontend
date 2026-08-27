@@ -12,10 +12,10 @@ import { useTradingContext } from "../../context/TradingContext";
 // ─── APIs ────────────────────────────────────────────────────────────────────
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const WALLET_API = `${BASE_URL}/api/coinswitch/spot/wallet-balance`;
-const HISTORY_API = `${BASE_URL}/api/coinswitch/spot/deposit-withdraw-history`;
-const DEPOSIT_API = `${BASE_URL}/api/coinswitch/spot/deposit-inr`;
-const WITHDRAW_API = `${BASE_URL}/api/coinswitch/spot/withdraw-inr`;
+const WALLET_API = `${BASE_URL}/api/spot/wallet-balance`;
+const HISTORY_API = `${BASE_URL}/api/spot/deposit-withdraw-history`;
+const DEPOSIT_API = `${BASE_URL}/api/spot/deposit-inr`;
+const WITHDRAW_API = `${BASE_URL}/api/spot/withdraw-inr`;
 
 const HISTORY_LIMIT = 20;
 

@@ -323,7 +323,7 @@ import { useTradingContext } from "../../context/TradingContext"; // ← yeh imp
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const API_URL = `${BASE_URL}/api/coinswitch/spot/ticker/all`;
+const API_URL = `${BASE_URL}/api/spot/ticker/all`;
 const TOP_N = 15;
 
 // ── Crypto icon (same helper as CoinListPanel) ───────────────────────────────
