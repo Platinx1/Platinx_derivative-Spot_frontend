@@ -869,6 +869,11 @@ const TradingChart = () => {
     socket.on("markPriceUpdate", (data) => {
       if (!data?.p) return;
 
+      // Symbol verification check
+      const evtSym = (data.s || "").toUpperCase().trim();
+      const curSym = SYMBOL.toUpperCase().trim();
+      if (evtSym && evtSym !== curSym) return;
+
       const newPrice = String(data.p);
       setCurrentPrice((prev) => {
         setPriceFlash(Number(newPrice) >= Number(prev) ? "up" : "down");
@@ -883,7 +888,8 @@ const TradingChart = () => {
         fundingRate: data.r != null ? String(data.r) : prev.fundingRate,
       }));
 
-      fetchTicker();
+      // OLD CODE (commented out to prevent REST API lag from overriding real-time socket price):
+      // fetchTicker();
     });
 
     socket.on("disconnect", () => setIsConnected(false));
@@ -919,7 +925,8 @@ const TradingChart = () => {
   const stats = [
     {
       label: "Mark",
-      value: fmt(ticker.markPrice || currentPrice),
+      // OLD CODE: value: fmt(ticker.markPrice || currentPrice),
+      value: fmt(currentPrice && Number(currentPrice) > 0 ? currentPrice : ticker.markPrice),
       color: "#a855f7",
     },
     {
