@@ -287,6 +287,7 @@ const Portfolio = () => {
         currentValue,
         gainLoss,
         gainLossPercent,
+        minQty: d.minQty || d.min_quantity || d.minNotional || d.minOrderQty || null,
       };
     });
   }, [portfolioData, tickerPrices]);
@@ -305,7 +306,11 @@ const Portfolio = () => {
       alert("Please enter a valid quantity");
       return;
     }
-    if (Number(sellQty) > Number(selectedCoin?.availableBal)) {
+    const maxAllowed = Math.max(
+      Number(selectedCoin?.availableBal || 0),
+      Number(selectedCoin?.totalHolding || 0)
+    );
+    if (Number(sellQty) > maxAllowed) {
       alert("Quantity exceeds available balance");
       return;
     }
@@ -519,7 +524,8 @@ const Portfolio = () => {
                           const currentMktPrice =
                             tickerPrices[h.pair] || h.currentPrice || h.avgBuyPrice;
                           setSellPrice(currentMktPrice ? String(currentMktPrice) : "");
-                          setSellQty(h.availableBal ? String(h.availableBal) : "");
+                          const qty = h.totalHolding || h.availableBal || 0;
+                          setSellQty(qty ? String(qty) : "");
                           setShowSellModal(true);
                         }}
                         style={{
@@ -621,27 +627,35 @@ const Portfolio = () => {
                     }}
                   >
                     <label style={{ fontSize: 12, color: "#9ca3af" }}>Quantity</label>
-                    <button
-                      onClick={() =>
-                        setSellQty(String(selectedCoin?.availableBal || 0))
-                      }
-                      style={{
-                        background: "none",
-                        border: "none",
-                        color: "#3b82f6",
-                        fontSize: 11,
-                        cursor: "pointer",
-                        textDecoration: "underline",
-                      }}
-                    >
-                      MAX
-                    </button>
+                    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      {selectedCoin?.minQty && (
+                        <span style={{ fontSize: 11, color: "#6b7280" }}>
+                          Min: {selectedCoin.minQty}
+                        </span>
+                      )}
+                      <button
+                        onClick={() =>
+                          setSellQty(String(selectedCoin?.totalHolding || selectedCoin?.availableBal || 0))
+                        }
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "#3b82f6",
+                          fontSize: 11,
+                          cursor: "pointer",
+                          textDecoration: "underline",
+                        }}
+                      >
+                        MAX
+                      </button>
+                    </div>
                   </div>
 
                   <input
                     type="number"
                     value={sellQty}
-                    max={selectedCoin?.availableBal}
+                    placeholder={selectedCoin?.minQty ? `Min: ${selectedCoin.minQty}` : String(selectedCoin?.totalHolding || 0)}
+                    max={selectedCoin?.totalHolding || selectedCoin?.availableBal}
                     onChange={(e) => setSellQty(e.target.value)}
                     style={{
                       width: "100%",

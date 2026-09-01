@@ -4,7 +4,7 @@ import { useTradingContext } from "../../context/TradingContext"; // ← yeh imp
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const API_URL = `${BASE_URL}/api/coinswitch/spot/ticker/all`;
+const API_URL = `${BASE_URL}/api/spot/ticker/all`;
 const TOP_N = 15;
 
 // ── Crypto icon (same helper as CoinListPanel) ───────────────────────────────
@@ -322,97 +322,97 @@ const Sidebar = ({ onShowPanel }) => {
 
         {loading && topCoins.length === 0
           ? Array.from({ length: 8 }).map((_, i) => (
-              <div
-                key={i}
-                style={{
-                  width: 22,
-                  height: 22,
-                  borderRadius: "50%",
-                  background: "rgba(255,255,255,0.04)",
-                  animation: "sb-pulse 1.5s ease infinite",
-                  animationDelay: `${i * 0.1}s`,
-                  marginBottom: 2,
-                }}
-              />
-            ))
+            <div
+              key={i}
+              style={{
+                width: 22,
+                height: 22,
+                borderRadius: "50%",
+                background: "rgba(255,255,255,0.04)",
+                animation: "sb-pulse 1.5s ease infinite",
+                animationDelay: `${i * 0.1}s`,
+                marginBottom: 2,
+              }}
+            />
+          ))
           : topCoins
-              .filter((coin) => {
-                // Extract base symbol (handles both BTCINR and BTC/INR)
-                const base = coin.symbol.includes("/")
-                  ? coin.symbol.split("/")[0]
-                  : coin.symbol;
+            .filter((coin) => {
+              // Extract base symbol (handles both BTCINR and BTC/INR)
+              const base = coin.symbol.includes("/")
+                ? coin.symbol.split("/")[0]
+                : coin.symbol;
 
-                // Hide these coins
-                return !["USDT", "HIGH" ,"BOME","LIGHT"].includes(base.toUpperCase());
-              })
-              .map((coin) => {
-                const isSelected = coin.symbol === selectedPair.symbol;
-                const pct = fmtPct(coin.percentageChange);
-                const clr = pctColor(coin.percentageChange);
+              // Hide these coins
+              return !["USDT", "HIGH", "BOME", "LIGHT"].includes(base.toUpperCase());
+            })
+            .map((coin) => {
+              const isSelected = coin.symbol === selectedPair.symbol;
+              const pct = fmtPct(coin.percentageChange);
+              const clr = pctColor(coin.percentageChange);
 
-                return (
-                  <Tooltip
-                    key={coin.symbol}
-                    label={coin.symbol}
-                    subLabel={pct}
-                    color={clr}
+              return (
+                <Tooltip
+                  key={coin.symbol}
+                  label={coin.symbol}
+                  subLabel={pct}
+                  color={clr}
+                >
+                  <button
+                    className="sb-coin"
+                    onClick={() => handleSelectCoin(coin)}
+                    style={{
+                      background: "none",
+                      border: "none",
+                      cursor: "pointer",
+                      padding: "3px 0",
+                      width: "100%",
+                      display: "flex",
+                      justifyContent: "center",
+                      position: "relative",
+                    }}
                   >
-                    <button
-                      className="sb-coin"
-                      onClick={() => handleSelectCoin(coin)}
+                    {/* Active indicator */}
+                    {isSelected && (
+                      <div
+                        style={{
+                          position: "absolute",
+                          left: 0,
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          width: 3,
+                          height: 20,
+                          background: "#f59e0b",
+                          borderRadius: "0 2px 2px 0",
+                          boxShadow: "0 0 6px rgba(245,158,11,0.5)",
+                        }}
+                      />
+                    )}
+
+                    <div
+                      className="sb-coin-inner"
                       style={{
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        padding: "3px 0",
-                        width: "100%",
+                        width: 36,
+                        height: 36,
+                        borderRadius: 10,
                         display: "flex",
+                        alignItems: "center",
                         justifyContent: "center",
-                        position: "relative",
+                        background: isSelected
+                          ? "rgba(245,158,11,0.08)"
+                          : "transparent",
+                        transition: "background 0.15s",
                       }}
                     >
-                      {/* Active indicator */}
-                      {isSelected && (
-                        <div
-                          style={{
-                            position: "absolute",
-                            left: 0,
-                            top: "50%",
-                            transform: "translateY(-50%)",
-                            width: 3,
-                            height: 20,
-                            background: "#f59e0b",
-                            borderRadius: "0 2px 2px 0",
-                            boxShadow: "0 0 6px rgba(245,158,11,0.5)",
-                          }}
-                        />
-                      )}
-
-                      <div
-                        className="sb-coin-inner"
-                        style={{
-                          width: 36,
-                          height: 36,
-                          borderRadius: 10,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          background: isSelected
-                            ? "rgba(245,158,11,0.08)"
-                            : "transparent",
-                          transition: "background 0.15s",
-                        }}
-                      >
-                        <CoinAvatar
-                          symbol={coin.symbol}
-                          size={22}
-                          selected={isSelected}
-                        />
-                      </div>
-                    </button>
-                  </Tooltip>
-                );
-              })}
+                      <CoinAvatar
+                        symbol={coin.symbol}
+                        size={22}
+                        selected={isSelected}
+                      />
+                    </div>
+                  </button>
+                </Tooltip>
+              );
+            })}
       </div>
     </div>
   );

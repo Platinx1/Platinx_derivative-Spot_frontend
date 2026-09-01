@@ -252,9 +252,9 @@ const MyOrders = ({ openOnly = true }) => {
                   color: "#C084FC",
                 }}
               >
-                Price
+                Limit Price
               </th>
-              {/* <th
+              <th
                 style={{
                   padding: "12px 16px",
                   textAlign: "right",
@@ -263,7 +263,7 @@ const MyOrders = ({ openOnly = true }) => {
                 }}
               >
                 Stop Price
-              </th> */}
+              </th>
               <th
                 style={{
                   padding: "12px 16px",
@@ -330,7 +330,7 @@ const MyOrders = ({ openOnly = true }) => {
             {orders.length === 0 ? (
               <tr>
                 <td
-                  colSpan="11"
+                  colSpan="12"
                   style={{ padding: 60, textAlign: "center", color: "#666" }}
                 >
                   No open orders
@@ -367,11 +367,15 @@ const MyOrders = ({ openOnly = true }) => {
                       {order.subType || order.sub_type || "—"}
                     </td>
                     <td style={{ padding: "12px 16px", textAlign: "right" }}>
-                      ₹{parseFloat(order.price || 0).toFixed(2)}
+                      {!order.price || parseFloat(order.price) === 0
+                        ? "-"
+                        : `₹${parseFloat(order.price).toFixed(2)}`}
                     </td>
-                    {/* <td style={{ padding: "12px 16px", textAlign: "right", color: order.stopPrice ? "#f59e0b" : "inherit" }}>
-                      {order.stopPrice ? `₹${parseFloat(order.stopPrice).toFixed(2)}` : "—"}
-                    </td> */}
+                    <td style={{ padding: "12px 16px", textAlign: "right" }}>
+                      {!order.stopPrice || parseFloat(order.stopPrice) === 0
+                        ? "-"
+                        : `₹${parseFloat(order.stopPrice).toFixed(2)}`}
+                    </td>
                     <td
                       style={{
                         padding: "12px 16px",

@@ -48,7 +48,7 @@ const C = {
 
   // Font
   mono: "'Inter', sans-serif",
-}; 
+};
 
 
 

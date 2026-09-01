@@ -12,6 +12,7 @@ const POSITIONS_API_BASE = `${BASE_URL}/api/fno/positions`;
 const PLACE_ORDER_API = `${BASE_URL}/api/fno/place-order`;
 const EXCHANGE_INFO_API = `${BASE_URL}/api/fno/exchange-info`;
 const TRADES_BY_POSITION_API = `${BASE_URL}/api/fno/trades-by-position`;
+const PAIR_INFO_API = `${BASE_URL}/api/fno/pair-by-name`;
 
 // ─── COLORS ────────────────────────────────────────────────────────────────
 const T = {
@@ -99,12 +100,64 @@ const fmtTime = (val) => {
   });
 };
 
+function roundUp(num, precision) {
+  const p = Number.isFinite(Number(precision)) ? Number(precision) : 3;
+  const factor = Math.pow(10, p);
+  return Math.ceil(num * factor) / factor;
+}
+
+function calculateMinQuantity(notionalVal, marketPrice, quantityPrecision) {
+  if (!notionalVal || !marketPrice || marketPrice <= 0) return 0;
+  const minQty = notionalVal / marketPrice;
+  return roundUp(minQty, quantityPrecision);
+}
+
+const getContractMinQty = (contract, currentMarkPrice) => {
+  if (!contract) return 0;
+
+  const notionalFilter = contract.filters?.find(
+    (f) => f.filterType === "MIN_NOTIONAL" || f.filterType === "NOTIONAL"
+  );
+  const notionalVal = parseFloat(
+    contract.notional || notionalFilter?.minNotional || notionalFilter?.notional || "0"
+  );
+
+  const rawPrecision = contract.quantityPrecision ?? contract.baseAssetPrecision ?? contract.qtyPrecision;
+  const quantityPrecision = (rawPrecision !== undefined && rawPrecision !== null && !isNaN(Number(rawPrecision)))
+    ? Number(rawPrecision)
+    : 3;
+
+  let notionalMinQty = 0;
+  if (notionalVal > 0 && currentMarkPrice > 0) {
+    notionalMinQty = roundUp(notionalVal / currentMarkPrice, quantityPrecision);
+  }
+
+  const marketFilter = contract.filters?.find((f) => f.filterType === "MARKET_QTY_SIZE");
+  const lotFilter = contract.filters?.find((f) => f.filterType === "LOT_SIZE");
+  const explicitMinQty = parseFloat(
+    contract.minQty || marketFilter?.minQty || lotFilter?.minQty || "0"
+  );
+
+  const finalMin = Math.max(notionalMinQty, explicitMinQty);
+  return finalMin > 0 ? finalMin : explicitMinQty || notionalMinQty || 0;
+};
+
+const getPosQty = (pos) => {
+  if (!pos) return 0;
+  return pos.quantity ?? pos.positionAmount ?? pos.size ?? pos.amount ?? 0;
+};
+
 // ─── Calculate real P&L ────────────────────────────────────────────────────
 const calcPnL = (pos, markPrice) => {
-  if (!markPrice) return null;
-  const entry = parseFloat(pos.entryPrice);
-  const amount = parseFloat(pos.positionAmount);
-  if (pos.positionType === "LONG") {
+  if (!markPrice || !pos) return null;
+  const entry = parseFloat(pos.entryPrice || pos.entry_price || pos.avgPrice || 0);
+  const amount = parseFloat(getPosQty(pos));
+  if (!entry || !amount) return 0;
+
+  const typeStr = (pos.positionType || pos.side || pos.type || "LONG").toString().toUpperCase();
+  const isLong = typeStr === "LONG" || typeStr === "BUY";
+
+  if (isLong) {
     return (markPrice - entry) * amount;
   } else {
     return (entry - markPrice) * amount;
@@ -140,18 +193,18 @@ const validateSellQuantity = (positionSize, inputQty, minQty) => {
   const qty = parseFloat(inputQty) || 0;
   const min = parseFloat(minQty) || 0;
 
-  // CASE 1: Position itself is below minimum → MUST close full
-  if (min > 0 && positionSize <= min) {
+  // CASE 1: Input quantity entered by user is below minimum order size → RED ERROR
+  if (min > 0 && qty > 0 && qty < min) {
+    result.error = `Quantity (${qty}) is below minimum allowed order size (${min}). Please enter at least ${min}.`;
+    return result;
+  }
+
+  // CASE 2: Position size itself is strictly below minimum → MUST close full
+  if (min > 0 && positionSize < min) {
     result.isValid = true;
     result.finalQty = positionSize;
     result.isFullClose = true;
     result.warning = `Position size (${positionSize}) is below minimum order size (${min}). Closing full position.`;
-    return result;
-  }
-
-  // CASE 2: Input quantity is below minimum → BLOCK
-  if (min > 0 && qty > 0 && qty < min) {
-    result.error = `Minimum order quantity is ${min}`;
     return result;
   }
 
@@ -163,7 +216,7 @@ const validateSellQuantity = (positionSize, inputQty, minQty) => {
     result.isValid = true;
     result.finalQty = positionSize;
     result.isFullClose = true;
-    result.warning = `Partial close leaves ${remaining.toFixed(3)} (below min ${min}). Closing full position instead.`;
+    result.warning = `Partial close leaves ${remaining.toFixed(6)} (below min ${min}). Closing full position instead.`;
     return result;
   }
 
@@ -270,10 +323,10 @@ const OrderModal = ({
   const BASE_COIN = position.contractPair.replace("INR", "");
   const SYMBOL = position.contractPair;
 
+  const initialQty = getPosQty(position);
   const [orderType, setOrderType] = useState("market");
   const [price, setPrice] = useState("");
-  const [quantity, setQuantity] = useState(position.positionAmount.toString());
-
+  const [quantity, setQuantity] = useState(initialQty ? initialQty.toString() : "");
   const [markPrice, setMarkPrice] = useState(0);
   const [priceDir, setPriceDir] = useState("up");
   const [isConnected, setIsConnected] = useState(false);
@@ -284,18 +337,62 @@ const OrderModal = ({
   const [error, setError] = useState(null);
   const [warning, setWarning] = useState(null);
   const [isFullClose, setIsFullClose] = useState(false);
+  const [pairInfo, setPairInfo] = useState(null);
+
+  useEffect(() => {
+    const q = getPosQty(position);
+    if (q) {
+      setQuantity(q.toString());
+    }
+  }, [position]);
+
+  useEffect(() => {
+    if (!SYMBOL) return;
+    let isMounted = true;
+    fetch(`${PAIR_INFO_API}?name=${SYMBOL}`)
+      .then((res) => res.json())
+      .then((json) => {
+        if (isMounted && json.status && json.data) {
+          const d = json.data;
+          setPairInfo({
+            notional: parseFloat(d.notional) || 0,
+            quantityPrecision: parseInt(d.quantityPrecision, 10),
+          });
+        }
+      })
+      .catch((e) => console.error("Pair info fetch error:", e));
+    return () => {
+      isMounted = false;
+    };
+  }, [SYMBOL]);
 
   const getMinQty = useCallback(() => {
+    const livePrice = markPrice > 0 ? markPrice : (parseFloat(position.entryPrice) || 0);
+
+    if (pairInfo && pairInfo.notional > 0 && livePrice > 0) {
+      const qPrec = Number.isFinite(pairInfo.quantityPrecision) ? pairInfo.quantityPrecision : 3;
+      return calculateMinQuantity(pairInfo.notional, livePrice, qPrec);
+    }
+
+    if (position?.minQty !== undefined && position?.minQty !== null) return parseFloat(position.minQty);
     if (!exchangeInfo || !SYMBOL) return null;
     const contract = exchangeInfo.contracts?.find((c) => c.name === SYMBOL);
     if (!contract) return null;
-    const marketFilter = contract.filters?.find((f) => f.filterType === "MARKET_QTY_SIZE");
-    const lotFilter = contract.filters?.find((f) => f.filterType === "LOT_SIZE");
-    return parseFloat(marketFilter?.minQty || lotFilter?.minQty || "0");
-  }, [exchangeInfo, SYMBOL]);
 
-  const minQty = getMinQty();
-  const positionSize = parseFloat(position.positionAmount || 0);
+    return getContractMinQty(contract, livePrice);
+  }, [position, pairInfo, markPrice, exchangeInfo, SYMBOL]);
+
+  const minQtyFromFunc = getMinQty();
+  const posQtyVal = parseFloat(getPosQty(position) || 0);
+  const minQtyVal = parseFloat(minQtyFromFunc || 0);
+
+  // Take the minimum of position quantity key and getMinQty() key
+  const effectiveMinQty = (posQtyVal > 0 && minQtyVal > 0)
+    ? Math.min(posQtyVal, minQtyVal)
+    : (minQtyVal || posQtyVal || 0);
+
+  const minQty = effectiveMinQty;
+  const positionSize = posQtyVal;
 
   useEffect(() => {
     const validation = validateSellQuantity(positionSize, quantity, minQty);
@@ -423,7 +520,7 @@ const OrderModal = ({
           <div>
             <div style={{ fontSize: 16, fontWeight: 700, color: T.text }}>{BASE_COIN}/INR</div>
             <div style={{ fontSize: 11, color: T.label }}>
-              {position.positionType} • {position.positionAmount} {BASE_COIN} • Entry{" "}
+              {position.positionType} • {positionSize} {BASE_COIN} • Entry{" "}
               {fmtINR(position.entryPrice)}
             </div>
           </div>
@@ -548,7 +645,7 @@ const OrderModal = ({
             >
               <span>QUANTITY ({BASE_COIN})</span>
               <span style={{ color: T.muted }}>
-                Min: {minQty || "—"} {BASE_COIN}
+                Min: {effectiveMinQty || "—"} {BASE_COIN}
               </span>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -556,7 +653,7 @@ const OrderModal = ({
                 type="text"
                 value={quantity}
                 onChange={(e) => setQuantity(e.target.value)}
-                placeholder={positionSize.toString()}
+                placeholder={effectiveMinQty ? effectiveMinQty.toString() : positionSize.toString()}
                 style={{
                   background: "transparent",
                   border: "none",
@@ -586,12 +683,27 @@ const OrderModal = ({
                 MAX
               </button>
             </div>
-            {validation.error && (
-              <div style={{ fontSize: 11, color: T.red, marginTop: 4 }}>⚠️ {validation.error}</div>
-            )}
           </div>
 
-          {warning && (
+          {validation.error && (
+            <div
+              style={{
+                color: T.red,
+                fontSize: 12,
+                marginTop: 8,
+                padding: "10px 14px",
+                background: "rgba(239, 68, 68, 0.12)",
+                border: "1px solid rgba(239, 68, 68, 0.3)",
+                borderRadius: 6,
+                fontFamily: T.mono,
+                fontWeight: 600,
+              }}
+            >
+              ⛔ {validation.error}
+            </div>
+          )}
+
+          {warning && !validation.error && (
             <div
               style={{
                 color: T.warning,
@@ -867,7 +979,7 @@ const TradesModal = ({ position, userId, side, onClose }) => {
             <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: T.mono }}>
               <thead>
                 <tr style={{ background: T.bgDeep, position: "sticky", top: 0 }}>
-                        {["Side", "Price", "Qty", "Contract Pair", "realizedPnl", "Time"].map((h) => (
+                  {["Side", "Price", "Qty", "Contract Pair", "realizedPnl", "Time"].map((h) => (
                     <th
                       key={h}
                       style={{
@@ -910,7 +1022,7 @@ const TradesModal = ({ position, userId, side, onClose }) => {
                         {tradePrice !== null ? fmtPrice(tradePrice) : "—"}
                       </td>
                       <td style={{ padding: "12px 16px", textAlign: "center", color: T.text }}>
-                        {qty} 
+                        {qty}
                       </td>
                       <td style={{ padding: "12px 16px", textAlign: "center", color: T.text }}>
                         {contractPair}
@@ -950,7 +1062,9 @@ const useLiveMarkPrices = (positions) => {
     socketRef.current = socket;
 
     socket.on("connect", () => {
-      const params = positions.map((pos) => `${pos.contractPair.toLowerCase()}@markPrice`);
+      const params = positions
+        .filter((pos) => pos && (pos.contractPair || pos.symbol))
+        .map((pos) => `${(pos.contractPair || pos.symbol).toLowerCase()}@markPrice`);
       socket.emit("subscribe", { params });
     });
 
@@ -967,7 +1081,7 @@ const useLiveMarkPrices = (positions) => {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [positions.map((p) => p.contractPair).join(",")]);
+  }, [positions.map((p) => p.contractPair || p.symbol || "").join(",")]);
 
   return markPrices;
 };
@@ -1048,7 +1162,8 @@ const Portfolio = () => {
   const totalMarginUsed = positions.reduce((sum, pos) => sum + parseFloat(pos.margin || 0), 0);
 
   const totalUnrealisedPnL = positions.reduce((sum, pos) => {
-    const mp = markPrices[pos.contractPair];
+    const sym = pos.contractPair || pos.symbol;
+    const mp = markPrices[sym];
     const pnl = mp !== undefined ? calcPnL(pos, mp) : 0;
     return sum + (pnl || 0);
   }, 0);
@@ -1236,10 +1351,10 @@ const Portfolio = () => {
                           {pos.positionType}
                         </td>
                         <td style={{ padding: "14px 16px", textAlign: "center", color: T.text }}>
-                          {pos.quantity}
+                          {getPosQty(pos)}
                         </td>
                         <td style={{ padding: "14px 16px", textAlign: "center", color: T.text }}>
-                          ₹{parseFloat(pos.entryPrice).toFixed(2)}
+                          {pos.entryPrice ? `₹${Number(pos.entryPrice).toFixed(3)}` : "—"}
                         </td>
                         {activeTab === "OPEN" ? (
                           <td
@@ -1250,7 +1365,7 @@ const Portfolio = () => {
                               fontWeight: 600,
                             }}
                           >
-                            {mp ? fmtPrice(mp) : "—"}
+                            {mp ? `₹${Number(mp).toFixed(3)}` : "—"}
                           </td>
                         ) : (
                           <td
@@ -1261,12 +1376,12 @@ const Portfolio = () => {
                               fontWeight: 600,
                             }}
                           >
-                            {closePrice ? `₹${parseFloat(closePrice).toFixed(2)}` : "—"}
+                            {closePrice ? `₹${Number(closePrice).toFixed(3)}` : "—"}
                           </td>
                         )}
                         {(activeTab === "OPEN" || activeTab === "LIQUIDATED") && (
                           <td style={{ padding: "14px 16px", textAlign: "center", color: T.warning }}>
-                            {pos.liquidationPrice ? `₹${parseFloat(pos.liquidationPrice).toFixed(2)}` : "—"}
+                            {pos.liquidationPrice ? `₹${Number(pos.liquidationPrice).toFixed(3)}` : "—"}
                           </td>
                         )}
                         <td style={{ padding: "14px 16px", textAlign: "center", color: T.text }}>
@@ -1339,8 +1454,8 @@ const Portfolio = () => {
                             >
                               VIEW
                             </button>
-                            
-                         
+
+
                           </td>
                         )}
                       </tr>
@@ -2771,7 +2886,7 @@ export default Portfolio;
 //   );
 // };
 
-// export default Portfolio; 
+// export default Portfolio;
 
 // // export default Portfolio;
 // import React, { useState, useEffect, useCallback, useRef } from "react";
@@ -2873,7 +2988,7 @@ export default Portfolio;
 // /**
 //  * Validates sell quantity before placing reduce-only market order
 //  * Prevents "Reduce-only order quantity is below the minimum allowed" error
-//  * 
+//  *
 //  * @param {number} positionSize - Current position size (e.g., 9.5)
 //  * @param {number} inputQty - User entered quantity (e.g., 5)
 //  * @param {number} minQty - Minimum order quantity from exchangeInfo (e.g., 4.9)
@@ -4947,7 +5062,7 @@ export default Portfolio;
 // //                             color: T.text,
 // //                           }}
 // //                         >
-// //                           {pos.quantity} 
+// //                           {pos.quantity}
 // //                         </td>
 
 // //                         {/* Entry Price */}
