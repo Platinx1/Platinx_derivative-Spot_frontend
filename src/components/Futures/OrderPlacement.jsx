@@ -2918,11 +2918,11 @@ const OrderPlacement = () => {
             onChange={(e) => setStopPrice(e.target.value)}
             placeholder="0.00"
             error={!!stopPricePrecisionError || !!stopPriceVsMarketError}
-            action={{
-              label: "Last",
-              onClick: () =>
-                setStopPrice(markPrice > 0 ? markPrice.toString() : ""),
-            }}
+            // action={{
+            //   label: "Last",
+            //   onClick: () =>
+            //     setStopPrice(markPrice > 0 ? markPrice.toString() : ""),
+            // }}
           />
         )}
 

@@ -172,7 +172,7 @@ const FeeTooltip = ({ price, qty, visible }) => {
     <div
       style={{
         position: "absolute",
-        bottom: "calc(100% + 10px)",
+        top: "calc(100% + 8px)",
         left: 0,
         width: 240,
         background: C.tooltipBg,
@@ -184,7 +184,7 @@ const FeeTooltip = ({ price, qty, visible }) => {
         zIndex: 100,
         opacity: visible ? 1 : 0,
         pointerEvents: visible ? "all" : "none",
-        transform: visible ? "translateY(0)" : "translateY(6px)",
+        transform: visible ? "translateY(0)" : "translateY(-6px)",
         transition: "opacity 0.2s ease, transform 0.2s ease",
       }}
     >
@@ -248,13 +248,13 @@ const FeeTooltip = ({ price, qty, visible }) => {
       <div
         style={{
           position: "absolute",
-          bottom: -6,
+          top: -6,
           left: 18,
           width: 10,
           height: 10,
           background: C.tooltipBg,
-          borderRight: "1px solid rgba(255,255,255,0.1)",
-          borderBottom: "1px solid rgba(255,255,255,0.1)",
+          borderLeft: "1px solid rgba(255,255,255,0.1)",
+          borderTop: "1px solid rgba(255,255,255,0.1)",
           transform: "rotate(45deg)",
         }}
       />
@@ -938,6 +938,7 @@ const OrderPlacement = () => {
           }}
           onMouseEnter={() => setFeeHover(true)}
           onMouseLeave={() => setFeeHover(false)}
+          onClick={() => setFeeHover((prev) => !prev)}
         >
           <span
             style={{
