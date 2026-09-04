@@ -10,7 +10,18 @@ const PORTFOLIO_API_URL = `${BASE_URL}/api/spot/portfolio`;
 const PLACE_ORDER_API_URL = `${BASE_URL}/api/spot/order`;
 const TICKER_API_BASE = `${BASE_URL}/api/spot/ticker/single`;
 const WALLET_API_URL = `${BASE_URL}/api/spot/wallet-balance`;
-const FEE_RATE = 0.004; // 0.4%
+const getFeePercent = (val) => {
+  const amount = Number(val) || 0;
+  if (amount >= 3000000000) return 0.04;    // 300 Cr - 5000 Cr
+  if (amount >= 1000000000) return 0.06;    // 100 Cr - 300 Cr
+  if (amount >= 500000000) return 0.08;     // 50 Cr - 100 Cr
+  if (amount >= 200000000) return 0.12;     // 20 Cr - 50 Cr
+  if (amount >= 50000000) return 0.14;      // 5 Cr - 20 Cr
+  if (amount >= 5000000) return 0.2;        // 50 L - 5 Cr
+  if (amount >= 2000000) return 0.24;       // 20 L - 50 L
+  if (amount >= 500000) return 0.26;        // 5 L - 20 L
+  return 0.4;                            // 0 - 5 L
+};
 
 // ─── COLOR TOKENS ────────────────────────────────────────────────────────────
 const C = {
@@ -165,7 +176,9 @@ const InputGroup = ({
 
 const FeeTooltip = ({ price, qty, visible }) => {
   const amount = price * qty;
-  const fee = amount * FEE_RATE;
+  const feePct = getFeePercent(amount);
+  const feeRate = feePct / 100;
+  const fee = amount * feeRate;
   const total = amount + fee;
 
   return (
@@ -206,7 +219,7 @@ const FeeTooltip = ({ price, qty, visible }) => {
         { key: "Price", val: fmtINR0(price) },
         { key: "Quantity", val: `×${qty.toFixed(6)}` },
         { key: "Amount", val: fmtINR(amount) },
-        { key: "Fee (0.4%)", val: `+${fmtINR(fee)}`, color: C.accent },
+        { key: `Fee (${feePct}%)`, val: `+${fmtINR(fee)}`, color: C.accent },
       ].map(({ key, val, color }) => (
         <div
           key={key}
@@ -481,7 +494,9 @@ const OrderPlacement = () => {
   const price = parseFloat(limitPrice.replace(/,/g, "")) || 0;
   const qtyNum = parseFloat(qty) || 0;
   const amount = price * qtyNum;
-  const fee = amount * FEE_RATE;
+  const feePct = getFeePercent(amount);
+  const feeRate = feePct / 100;
+  const fee = amount * feeRate;
   const totalCost = amount + fee;
   const totalReceive = amount - fee;
 
@@ -859,7 +874,7 @@ const OrderPlacement = () => {
                   : fmtINR(totalReceive, 2)}
               </div>
             </div>
-            <span style={{ fontSize: 9, color: C.label }}>Fee 0.4%</span>
+            <span style={{ fontSize: 9, color: C.label }}>Fee {feePct}%</span>
           </div>
         </div>
 
@@ -947,7 +962,7 @@ const OrderPlacement = () => {
               cursor: "pointer",
             }}
           >
-            Fee breakup (0.4%)
+            Fee breakup ({feePct}%)
           </span>
           <FeeTooltip price={price} qty={qtyNum} visible={feeHover} />
         </div>
