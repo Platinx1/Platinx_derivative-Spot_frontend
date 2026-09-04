@@ -160,7 +160,7 @@ const CoinListPanel = ({
     try {
       return JSON.parse(
         localStorage.getItem("cs_favorites") ||
-          '["BTC/INR","ETH/INR","XRP/INR","SOL/INR"]',
+        '["BTC/INR","ETH/INR","XRP/INR","SOL/INR"]',
       );
     } catch {
       return ["BTC/INR", "ETH/INR", "XRP/INR", "SOL/INR"];
@@ -578,7 +578,7 @@ const CoinListPanel = ({
                 : coin.symbol.replace("INR", "");
 
               // Hide these coins
-              return !["USDT", "HIGH","BOME"].includes(base.toUpperCase());
+              return !["USDT", "HIGH", "BOME"].includes(base.toUpperCase());
             })
             .map((coin) => {
               const isSelected = coin.symbol === selectedPair.symbol;
@@ -643,11 +643,11 @@ const CoinListPanel = ({
                           /INR
                         </span>
                       </div>
-                      <div
+                      {/* <div
                         style={{ color: "#1f2937", fontSize: 10, marginTop: 1 }}
                       >
                         CoinSwitchX
-                      </div>
+                      </div> */}
                     </div>
                   </div>
 

@@ -132,13 +132,14 @@ const TradingChart = ({ selectedCoin }) => {
       }
 
       if (d) {
+        // console.log(d.baseVolume, "d.baseVolume")
         setTickerData({
           percentageChange: d.percentageChange != null ? String(d.percentageChange) : "0.00",
           highPrice: d.highPrice != null ? String(d.highPrice) : "0",
           lowPrice: d.lowPrice != null ? String(d.lowPrice) : "0",
           openPrice: d.openPrice != null ? String(d.openPrice) : "0",
           quoteVolume: d.quoteVolume != null ? String(d.quoteVolume) : "0",
-          baseVolume: d.baseVolume != null ? String(d.baseVolume) : "0",
+          baseVolume: d.baseVolume != null ? d.baseVolume : "0",
         });
         const newP = d.lastPrice || d.price;
         if (newP) {
@@ -276,7 +277,7 @@ const TradingChart = ({ selectedCoin }) => {
     { label: "Open", value: fmt(tickerData.openPrice), color: "#9ca3af" },
     { label: "Vol INR", value: fmtVol(tickerData.quoteVolume), color: "#9ca3af" },
     ...(tickerData.baseVolume && tickerData.baseVolume !== "0"
-      ? [{ label: "Vol Base", value: fmtVol(tickerData.baseVolume), color: "#9ca3af" }]
+      ? [{ label: "Vol Base", value: tickerData.baseVolume, color: "#9ca3af" }]
       : []),
   ];
 

@@ -53,7 +53,7 @@ const CoinIcon = ({ symbol }) => {
 };
 
 const MyOrders = ({ openOnly = true, refreshOrders }) => {
-  const { userId } = useUser(); // Futures pattern
+  const { userId, refreshBalance } = useUser(); // Futures pattern
   const { ordersRefresh } = useTradingContext();
   const socketRef = useRef(null);
 
@@ -168,6 +168,7 @@ const MyOrders = ({ openOnly = true, refreshOrders }) => {
         toast.success(result.message || "Order cancelled successfully");
         setOrders((prev) => prev.filter((o) => o.order_id !== targetId));
         fetchOrders(false);
+        refreshBalance?.();
       } else {
         toast.error(result.message || "Failed to cancel order");
       }

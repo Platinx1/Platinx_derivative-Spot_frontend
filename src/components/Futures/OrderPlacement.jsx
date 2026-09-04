@@ -2543,10 +2543,10 @@ const OrderPlacement = () => {
 
     setTpSlModalOpen(false);
   };
-  const handleRemoveTpSl = () => {
-    if (tpSlActiveTab === "takeProfit") setTakeProfitPrice("");
-    else setStopLossPrice("");
-  };
+  // const handleRemoveTpSl = () => {
+  //   if (tpSlActiveTab === "takeProfit") setTakeProfitPrice("");
+  //   else setStopLossPrice("");
+  // };
 
   const resetForm = () => {
     setQuantity("");
@@ -2765,7 +2765,7 @@ const OrderPlacement = () => {
                 fontVariantNumeric: "tabular-nums",
               }}
             >
-              {markPrice > 0 ? fmtPrice(markPrice) : "—"}
+              {markPrice > 0 ? `₹${Number(markPrice).toFixed(3)}` : "—"}
             </span>
             <span
               style={{
@@ -2918,11 +2918,11 @@ const OrderPlacement = () => {
             onChange={(e) => setStopPrice(e.target.value)}
             placeholder="0.00"
             error={!!stopPricePrecisionError || !!stopPriceVsMarketError}
-            action={{
-              label: "Last",
-              onClick: () =>
-                setStopPrice(markPrice > 0 ? markPrice.toString() : ""),
-            }}
+            // action={{
+            //   label: "Last",
+            //   onClick: () =>
+            //     setStopPrice(markPrice > 0 ? markPrice.toString() : ""),
+            // }}
           />
         )}
 
@@ -3571,9 +3571,9 @@ const OrderPlacement = () => {
               unit={SYMBOL.endsWith("USDT") ? "USDT" : "INR"}
             />
 
-            {(tpSlActiveTab === "takeProfit" ? takeProfitPrice : stopLossPrice) && (
+            {/* {(tpSlActiveTab === "takeProfit" ? takeProfitPrice : stopLossPrice) && (
               <button
-                onClick={handleRemoveTpSl}
+                // onClick={handleRemoveTpSl}
                 style={{
                   alignSelf: "flex-start",
                   background: "transparent",
@@ -3588,7 +3588,7 @@ const OrderPlacement = () => {
               >
                 Remove {tpSlActiveTab === "takeProfit" ? "Take Profit" : "Stop Loss"}
               </button>
-            )}
+            )} */}
 
             {/* Est. P&L */}
             <div
