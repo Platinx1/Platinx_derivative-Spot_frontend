@@ -979,7 +979,7 @@ const TradesModal = ({ position, userId, side, onClose }) => {
             <table style={{ width: "100%", borderCollapse: "collapse", fontFamily: T.mono }}>
               <thead>
                 <tr style={{ background: T.bgDeep, position: "sticky", top: 0 }}>
-                  {["Side", "Price", "Qty", "Contract Pair", "realizedPnl", "Time"].map((h) => (
+                  {["Side", "Price", "Qty", "Contract Pair", "Time"].map((h) => (
                     <th
                       key={h}
                       style={{
@@ -1027,9 +1027,9 @@ const TradesModal = ({ position, userId, side, onClose }) => {
                       <td style={{ padding: "12px 16px", textAlign: "center", color: T.text }}>
                         {contractPair}
                       </td>
-                      <td style={{ padding: "12px 16px", textAlign: "center", color: T.muted }}>
+                      {/* <td style={{ padding: "12px 16px", textAlign: "center", color: T.muted }}>
                         {realizedPnl !== null ? fmtINR(realizedPnl) : "—"}
-                      </td>
+                      </td> */}
                       <td style={{ padding: "12px 16px", textAlign: "center", color: T.muted, fontSize: 12 }}>
                         {fmtTime(time)}
                       </td>
@@ -1324,7 +1324,8 @@ const Portfolio = () => {
                   </tr>
                 ) : (
                   positions.map((pos) => {
-                    const isLong = pos.positionType === "LONG";
+                    const isLong = String(pos.positionType).toUpperCase() === "LONG";
+                    const isShort = String(pos.positionType).toUpperCase() === "SHORT";
 
                     const mp = markPrices[pos.contractPair];
                     const livePnL = mp !== undefined ? calcPnL(pos, mp) : null;
@@ -1333,7 +1334,12 @@ const Portfolio = () => {
 
                     const pnlColor = displayPnL === null ? T.muted : displayPnL < 0 ? T.red : T.green;
 
-                    const closePrice = pos.closePrice || pos.sellPrice || pos.exitPrice || null;
+                    const rawClosePrice = pos.closePrice || pos.sellPrice || pos.exitPrice || null;
+
+                    // CLOSED tab me agar type SHORT ho, to entry price and sell price interchange ho jaaye
+                    const isClosedShort = activeTab === "CLOSED" && isShort;
+                    const displayEntryPrice = isClosedShort ? rawClosePrice : pos.entryPrice;
+                    const displayClosePrice = isClosedShort ? pos.entryPrice : rawClosePrice;
 
                     return (
                       <tr key={pos.positionId} style={{ borderBottom: `1px solid ${T.border}` }}>
@@ -1354,7 +1360,7 @@ const Portfolio = () => {
                           {getPosQty(pos)}
                         </td>
                         <td style={{ padding: "14px 16px", textAlign: "center", color: T.text }}>
-                          {pos.entryPrice ? `₹${Number(pos.entryPrice).toFixed(3)}` : "—"}
+                          {displayEntryPrice ? `₹${Number(displayEntryPrice).toFixed(3)}` : "—"}
                         </td>
                         {activeTab === "OPEN" ? (
                           <td
@@ -1372,11 +1378,11 @@ const Portfolio = () => {
                             style={{
                               padding: "14px 16px",
                               textAlign: "center",
-                              color: closePrice ? T.accent : T.muted,
+                              color: displayClosePrice ? T.accent : T.muted,
                               fontWeight: 600,
                             }}
                           >
-                            {closePrice ? `₹${Number(closePrice).toFixed(3)}` : "—"}
+                            {displayClosePrice ? `₹${Number(displayClosePrice).toFixed(3)}` : "—"}
                           </td>
                         )}
                         {(activeTab === "OPEN" || activeTab === "LIQUIDATED") && (

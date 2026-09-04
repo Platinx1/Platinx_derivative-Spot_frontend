@@ -11,7 +11,7 @@ const CANCEL_ORDER_API = `${BASE_URL}/api/fno/delete-order`;
 const EDIT_ORDER_API = `${BASE_URL}/api/fno/edit-order`;
 
 const MyOrders = ({ openOnly = true }) => {
-  const { userId } = useUser();
+  const { userId, refreshBalance } = useUser();
 
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -89,6 +89,7 @@ const MyOrders = ({ openOnly = true }) => {
       if (res.ok && data.status) {
         toast.success("Order cancelled successfully");
         fetchOrders();
+        refreshBalance?.();
       } else {
         toast.error(data.message || "Cancel failed");
 
@@ -143,6 +144,7 @@ const MyOrders = ({ openOnly = true }) => {
         toast.success("Order updated successfully");
         setShowEditModal(false);
         fetchOrders();
+        refreshBalance?.();
       } else {
         toast.error(data.message || "Failed to update order");
       }
